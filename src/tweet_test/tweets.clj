@@ -49,8 +49,7 @@
 
 (defn string-tweets-request [next-page]
   (let [response
-  (http/get
-    (str "http://search.twitter.com/search.json" next-page {:accept :json}))]
+  (http/get next-page {:accept :json})]
     (if (= (response :status) 200)
         (parse-tweets-response response)
         (throw 
@@ -70,7 +69,14 @@
                  (select-keys (x :entities)[:hashtags :urls :user_mentions])
                  (select-keys (x :metadata)[:recent_retweets]))))))
 
-(defn get-all-tweets [response])
+(defn get-all-tweets [term]
+  (let [tweets (list)
+        first-response (initial-tweets-request term)]
+    (conj tweets (get-tweet-info first-response))
+    (loop [next-page (get-next-page first-response)]
+      (let [next-response (string-tweets-request next-page)]
+        (conj tweets (get-tweet-info next-response))
+        (recur (get-next-page next-response))))))
 
 
 (comment 
