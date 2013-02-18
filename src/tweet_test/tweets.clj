@@ -31,10 +31,7 @@
     (util/url "http://search.twitter.com/search.json" 
               {:q query 
                :include_entities true
-               :lang "en"
-               :result_type "mixed" 
-               :rpp 100})))
-
+               :result_type "mixed"})))
 
 (defn initial-tweets-request [search-term]
     (let [response
@@ -59,7 +56,7 @@
            (response :status) "."))))))
 
 (defn get-next-page [response]
-  (util/url "http://search.twitter.com/search.json" (response :next_page)))
+  (str (util/url "http://search.twitter.com/search.json?" (response :next_page))))
 
 (defn get-tweet-info [response]
   (let [results (response :results)]
@@ -76,6 +73,7 @@
     (loop [next-page (get-next-page first-response)]
       (let [next-response (string-tweets-request next-page)]
         (conj tweets (get-tweet-info next-response))
+        (println (next-response :page))
         (recur (get-next-page next-response))))))
 
 
