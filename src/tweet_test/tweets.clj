@@ -22,10 +22,14 @@
     (cheshire/parse-string true) 
     peek 
     (:trends)
-    (parse-trends)))
+    (parse-trends)
+    (cheshire/generate-string)))
 
-(defn add-trends-to-db []
-  (at/every 5000 #(data/insert-trends (trends-response)(println "inserting trends")) my-pool :fixed-delay true))
+(defn trends-json []
+  (cheshire/generate-string (trends-response)))
+
+(comment (defn add-trends-to-db []
+  (at/every 5000 #(data/insert-trends (trends-response)(println "inserting trends")) my-pool :fixed-delay true)))
 
 ;;Utilities for requesting and parsing tweet data
 (defn parse-tweets-response [response]
@@ -77,7 +81,7 @@
 (defn send-to-db [tweets]
             (println tweets))
 
-(add-trends-to-db)
+;(add-trends-to-db)
 
 (comment 
 (def avg-age 360)

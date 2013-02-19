@@ -4,10 +4,10 @@
             [monger.json :as json])
 	(:import [com.mongodb MongoOptions ServerAddress]))
 
-(mg/connect!)
+(comment (mg/connect!)
 (mg/use-db! "trend-analyser")
 
 (defn db-is-not-empty? [] (str (coll/any? "trend-analyser")))
 
 (defn insert-trends [trends]
-  (coll/update "trends" trends :upsert true :multi true))
+  (coll/update "trends" trends :upsert true :multi true)))

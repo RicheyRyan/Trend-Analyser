@@ -8,7 +8,8 @@
 
 (defroutes app-routes
   (route/files "/" {:root (str (System/getProperty "user.dir") "/public")})
-  (GET "/trends" [] (trend-html))
+  (GET "/trendshtml" [] (trend-html))
+  (GET "/trends" [] (trends-response))
   (GET "/tweets/:trend" [trend] (tweet-html [trend]))
   (route/not-found "Not Found"))
 
