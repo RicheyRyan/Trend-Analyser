@@ -2,9 +2,13 @@
   (:require [cheshire.core :as cheshire]
             [clj-http.client :as http]
             [clojure.string :as string]
-            [hiccup.util :as util]))
+            [hiccup.util :as util]
+            [tweet-test.data :as data]
+            [overtone.at-at :as at]))
 
 (def trend-url "https://api.twitter.com/1/trends/560743.json")
+
+(def my-pool (at/mk-pool))
 
 ;;Utilities for requesting and parsing trend data
 (defn parse-trends [list]
@@ -20,6 +24,9 @@
     (:trends)
     (parse-trends)))
 
+(defn add-trends-to-db []
+  (at/every 5000 #(data/insert-trends (trends-response)(println "inserting trends")) my-pool :fixed-delay true))
+
 ;;Utilities for requesting and parsing tweet data
 (defn parse-tweets-response [response]
   (->
@@ -31,7 +38,8 @@
     (util/url "http://search.twitter.com/search.json" 
               {:q query 
                :include_entities true
-               :result_type "mixed"})))
+               :result_type "mixed"
+               :rpp 100})))
 
 (defn initial-tweets-request [search-term]
     (let [response
@@ -66,16 +74,10 @@
                  (select-keys (x :entities)[:hashtags :urls :user_mentions])
                  (select-keys (x :metadata)[:recent_retweets]))))))
 
-(defn get-all-tweets [term]
-  (let [tweets (list)
-        first-response (initial-tweets-request term)]
-    (conj tweets (get-tweet-info first-response))
-    (loop [next-page (get-next-page first-response)]
-      (let [next-response (string-tweets-request next-page)]
-        (conj tweets (get-tweet-info next-response))
-        (println (next-response :page))
-        (recur (get-next-page next-response))))))
+(defn send-to-db [tweets]
+            (println tweets))
 
+(add-trends-to-db)
 
 (comment 
 (def avg-age 360)
