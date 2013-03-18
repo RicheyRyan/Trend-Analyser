@@ -3,28 +3,46 @@ var tweets;
 
 var sidebar = $(".trend-sidebar");
 var tweetHolder = $(".tweet-holder");
+var hashtagBar = $(".hashtags");
 
 $(function() {
 
     function loadSideBar(list){
-        sidebar.empty();
-        sidebar.append('<li class="nav-header">Trends</li>');
+        sidebar.empty().append('<li class="nav-header">Trends</li>');
         $(list).each(function(index, item){
-            sidebar.append('<li><a href="#">' + item + '</a></li>');
+            sidebar.append('<li class="trend"><a href="#" >' + item + '</a></li>');
         });
+
+        $("active").removeClass("active");
+
+        $(".trend").click( function(){
+            $("trend").removeClass("active");
+            var text = $(this).text();
+            console.log($(this));
+            $(this).addClass("active");
+            getTweets(text);
+            getHashtags(text);
+        });
+
     }
 
     function loadTweets(list){
-        //tweetHolder.empty();
+        tweetHolder.empty();
         $(list).each(function(index, item){
-           //tweetHolder.append('<li><blockquote class="twitter-tweet"> <a href="https://twitter.com/twitterapi/status/' + item + '"></a></blockquote></li>');
            tweetHolder.append('<li><blockquote class="twitter-tweet"> <a href="https://twitter.com/twitterapi/status/' + item + '"></a></blockquote></li>');
-            //tweetHolder.append('<li>hi</li>');
-            //$.getScript('//playform.twitter.com/widgets.js')
-
-            //twttr.widgets.load();
+           console.log(index);
+           twttr.widgets.load();
         });
+        console.log(tweetHolder.html());
+        twttr.widgets.load();
+    }
 
+    function loadHashtags(list){
+        hashtagBar.empty();
+        $(list).each(function(index, item){
+
+            hashtagBar.append('<p><a href="https://twitter.com/search?q='+item+'">' + item + '</a></p>');
+        });
     }
 
     function getTrends(){
@@ -35,8 +53,8 @@ $(function() {
         }); 
     }
 
-    function getTweets(){
-        var url = "http://localhost:3000/tweets/techVpoverty";
+    function getTweets(query){
+        var url = "http://localhost:3000/tweets/" + encodeURIComponent(query);
         $.getJSON(url, function(data){
             tweets = data;
             loadTweets(tweets);
@@ -44,9 +62,22 @@ $(function() {
         }); 
     }
 
+    function getHashtags(query){
+        var url = "http://localhost:3000/hashtags/GAA" + encodeURIComponent(query);
+        $.getJSON(url, function(data){
+            hashtags = data;
+            loadHashtags(hashtags);
+            console.log(hashtags);
+        }); 
+    }
+
+    
+
+
     // Pull contacts from the server
     getTrends();
-    getTweets();
+    getTweets($(trends).get(1));
+    getHashtags($(trends).get(1));
 });
 
 

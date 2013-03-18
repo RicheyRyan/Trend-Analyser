@@ -1,10 +1,13 @@
 (ns trend-analyser.scheduler
+  "This namespace provides utilities for creating timers to run a task periodically."
   (:import (java.util.concurrent ScheduledThreadPoolExecutor TimeUnit)))
 
 (def ^:private num-threads 1)
 (def ^:private pool (atom nil))
 
-(defn- thread-pool []
+(defn- thread-pool 
+  "Creates a pool of threads to execute jobs on."
+  []
   (swap! pool (fn [p] (or p (ScheduledThreadPoolExecutor. num-threads)))))
 
 (defn periodically

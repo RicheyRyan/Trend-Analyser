@@ -6,16 +6,11 @@
             [clojure.string :as string]
             [hiccup.util :as util]
             [trend-analyser.data :as data]
-            [overtone.at-at :as at]
             [trend-analyser.scheduler :as scheduler]))
 
 ;The URL for receiving a list of trends from Twitter.
 (def trend-url 
   "https://api.twitter.com/1/trends/560743.json")
-
-;A thread pool to contain timed jobs.
-(def my-pool 
-   (at/mk-pool))
 
 (defn parse-trends 
   "Loops through a response from Twitter containing trends and returns a list with the trend names."
@@ -37,6 +32,16 @@
     (:trends)
     (parse-trends)))
 
+(defn trends-response 
+  "Queries Twitter for the trends, pulls out the request body, parses the JSON,
+  extracts the trend data and parses it."
+  []
+    (parse-trends 
+     (:trends 
+       (peek 
+         (cheshire/parse-string 
+                                (:body (http/get trend-url {:accept :json})) true)))))
+
 (defn trends-json 
   "Retrieves the trends from the database and creates a JSON string."
   []
@@ -46,16 +51,6 @@
   "A helper function which takes a number of minutes and returns the equivilent number of milliseconds."
   [minutes]
   (* 1000 (* 60 minutes)))
-
-(defn timed-query 
-  "A helper function that takes another function and executes it at the specified."
-  [query interval]
-  (at/every interval (query) my-pool :fixed-delay true))
-
-(defn add-trends-to-db 
-  "Takes the parsed trend data and inserts it into the database."
-  []
-  (data/insert-trends (trends-response)))
 
 (defn parse-tweets-response 
   "A function to parse the response send by Twitter.
@@ -73,6 +68,7 @@
     (util/url "http://search.twitter.com/search.json" 
               {:q query 
                :include_entities true
+               :lang "en"
                :result_type "mixed"
                :rpp 100})))
 
@@ -122,22 +118,61 @@
                (for [tweet tweets]
                  (merge (get tweet :id)))))))
 
+(defn parse-tweet-for-hashtag
+  "A function to parse all the text of trend names out of tweet data.a"
+  [tweet]
+  (for [x (tweet :hashtags)]
+    (x :text)))
 
+
+(defn hashtag-json 
+  "A function to take tweets and generate a JSON string containing all the hashtags associated with those tweets."
+  [search-term]
+      (let [tweets (get-tweet-info 
+                     (initial-tweets-request search-term))]
+        (cheshire/generate-string
+          (set 
+            (flatten
+              (for [tweet tweets] 
+                (parse-tweet-for-hashtag tweet)))))))
+
+(defn add-tweets-to-db 
+  "A function to facilitate requesting tweets from Twitter and feed them into the database."
+  []
+  (let [trends (data/retrieve-trends)]
+    (for [trend trends]
+      (raw-tweet-to-db trend))))
+
+(defn add-trends-to-db 
+  "Takes the parsed trend data and inserts it into the database."
+  []
+  (data/insert-trends (trends-response))
+  (add-tweets-to-db)
+  (println "inserting"))
+  
+;A value to be used in the start function to indicate the task should start immediately.
 (def immediately 0)
 
+;A value to be used in the start function which represents a period of a minute.
 (def every-minute (* 60 1000))
-  
-(defn start [fn]
-  (scheduler/periodically fn immediately every-minute))
 
-(defn stop []
+
+(defn start 
+  "A function that executes the supplied function for the frequency specified by the period."
+  [fn period]
+  (scheduler/periodically fn immediately period))
+
+(defn stop
+  "A function to stopped the timed execution that start initiated."
+  []
   (scheduler/shutdown))
 
+;Trends are requested and added to Twitter every minute.
+;(start #(add-trends-to-db) every-minute)
 
-
-
-  ;;(timed-query #(trends-response) (min-to-millis 30))
-
+;The bones of code to create a bayesian rating system for tweets. The number of retweets would
+;be rated by how old the tweets were in order to created value which would provide an accurate rank for
+;that tweet.
 (comment 
 (def avg-age 360)
 

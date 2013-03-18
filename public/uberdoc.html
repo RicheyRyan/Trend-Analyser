@@ -3031,7 +3031,7 @@ net.brehaut.ClojureTools = (function (SH) {
 })(SyntaxHighlighter);
 </script><title>Trend-Analyser -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">Trend-Analyser</h1><h2 class="project-version">0.1.1-SNAPSHOT</h2><br /><p>A compojure based web app that analyses trend data from Twitter.
   Uses MongoDB for storage and an assortment of libraries to process the tweets.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">compojure</td><td class="dotted"><hr /></td><td class="dep-version">1.1.5</td></tr><tr><td class="dep-name">cheshire</td><td class="dotted"><hr /></td><td class="dep-version">5.0.1</td></tr><tr><td class="dep-name">clj-http</td><td class="dotted"><hr /></td><td class="dep-version">0.6.3</td></tr><tr><td class="dep-name">hiccup</td><td class="dotted"><hr /></td><td class="dep-version">1.0.2</td></tr><tr><td class="dep-name">com.novemberain/monger</td><td class="dotted"><hr /></td><td class="dep-version">1.4.2</td></tr><tr><td class="dep-name">overtone/at-at</td><td class="dotted"><hr /></td><td class="dep-version">1.1.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#trend-analyser.handler">trend-analyser.handler</a></li><li><a href="#trend-analyser.tweets">trend-analyser.tweets</a></li><li><a href="#trend-analyser.html">trend-analyser.html</a></li><li><a href="#trend-analyser.data">trend-analyser.data</a></li><li><a href="#"></a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#trend-analyser.handler" name="trend-analyser.handler"><h1 class="project-name">trend-analyser.handler</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Handles the incoming requests to server.</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">compojure</td><td class="dotted"><hr /></td><td class="dep-version">1.1.5</td></tr><tr><td class="dep-name">cheshire</td><td class="dotted"><hr /></td><td class="dep-version">5.0.1</td></tr><tr><td class="dep-name">clj-http</td><td class="dotted"><hr /></td><td class="dep-version">0.6.3</td></tr><tr><td class="dep-name">hiccup</td><td class="dotted"><hr /></td><td class="dep-version">1.0.2</td></tr><tr><td class="dep-name">com.novemberain/monger</td><td class="dotted"><hr /></td><td class="dep-version">1.4.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#trend-analyser.handler">trend-analyser.handler</a></li><li><a href="#trend-analyser.tweets">trend-analyser.tweets</a></li><li><a href="#trend-analyser.html">trend-analyser.html</a></li><li><a href="#trend-analyser.data">trend-analyser.data</a></li><li><a href="#trend-analyser.scheduler">trend-analyser.scheduler</a></li><li><a href="#"></a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#trend-analyser.handler" name="trend-analyser.handler"><h1 class="project-name">trend-analyser.handler</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Handles the incoming requests to server.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns trend-analyser.handler
   (:use [compojure.core]
         [trend-analyser.tweets]
@@ -3050,6 +3050,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (GET &quot;/tweets/:trend&quot; [trend] (tweet-json trend))
   (GET &quot;/tweetshtml/:trend&quot; [trend] (tweet-html trend))
   (GET &quot;/tweetlisthtml/:trend&quot; [trend] (tweet-list-html trend))
+  (GET &quot;/hashtags/:trend&quot; [trend] (hashtag-json trend))
   (route/not-found &quot;Not Found&quot;))</pre></td></tr><tr><td class="docs"><p>Defines the app variable which compojure will use when running the app.</p>
 </td><td class="codes"><pre class="brush: clojure">(def app
   (handler/site app-routes))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#trend-analyser.tweets" name="trend-analyser.tweets"><h1 class="project-name">trend-analyser.tweets</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>This namespace handles all the major tweet processing. It makes requests to Twitter,
@@ -3060,11 +3061,9 @@ net.brehaut.ClojureTools = (function (SH) {
             [clojure.string :as string]
             [hiccup.util :as util]
             [trend-analyser.data :as data]
-            [overtone.at-at :as at]))</pre></td></tr><tr><td class="docs"><p>The URL for receiving a list of trends from Twitter.</p>
+            [trend-analyser.scheduler :as scheduler]))</pre></td></tr><tr><td class="docs"><p>The URL for receiving a list of trends from Twitter.</p>
 </td><td class="codes"><pre class="brush: clojure">(def trend-url 
-  &quot;https://api.twitter.com/1/trends/560743.json&quot;)</pre></td></tr><tr><td class="docs"><p>A thread pool to contain timed jobs.</p>
-</td><td class="codes"><pre class="brush: clojure">(def my-pool 
-   (at/mk-pool))</pre></td></tr><tr><td class="docs"><p>Loops through a response from Twitter containing trends and returns a list with the trend names.</p>
+  &quot;https://api.twitter.com/1/trends/560743.json&quot;)</pre></td></tr><tr><td class="docs"><p>Loops through a response from Twitter containing trends and returns a list with the trend names.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn parse-trends 
   [list]
   {:trends
@@ -3086,13 +3085,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (cheshire/generate-string (data/retrieve-trends)))</pre></td></tr><tr><td class="docs"><p>A helper function which takes a number of minutes and returns the equivilent number of milliseconds.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn min-to-millis 
   [minutes]
-  (* 1000 (* 60 minutes)))</pre></td></tr><tr><td class="docs"><p>A helper function that takes another function and executes it at the specified.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn timed-query 
-  [query interval]
-  (at/every interval (query) my-pool :fixed-delay true))</pre></td></tr><tr><td class="docs"><p>Takes the parsed trend data and inserts it into the database.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn add-trends-to-db 
-  []
-  (data/insert-trends (trends-response)))</pre></td></tr><tr><td class="docs"><p>A function to parse the response send by Twitter.
+  (* 1000 (* 60 minutes)))</pre></td></tr><tr><td class="docs"><p>A function to parse the response send by Twitter.
    It pulls the body out of the response and parses the json string.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn parse-tweets-response 
    [response]
@@ -3106,6 +3099,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (util/url &quot;http://search.twitter.com/search.json&quot; 
               {:q query 
                :include_entities true
+               :lang &quot;en&quot;
                :result_type &quot;mixed&quot;
                :rpp 100})))</pre></td></tr><tr><td class="docs"><p>A function to query Twitter for tweets and parse the response if it was successful.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn initial-tweets-request 
@@ -3143,8 +3137,42 @@ net.brehaut.ClojureTools = (function (SH) {
         (cheshire/generate-string 
          (take 10
                (for [tweet tweets]
-                 (merge (get tweet :id)))))))</pre></td></tr><tr><td class="docs"><p>(timed-query #(trends-response) (min-to-millis 30))</p>
-</td><td class="codes"></td></tr><tr><td class="docs">
+                 (merge (get tweet :id)))))))</pre></td></tr><tr><td class="docs"><p>A function to parse all the text of trend names out of tweet data.a</p>
+</td><td class="codes"><pre class="brush: clojure">(defn parse-tweet-for-hashtag
+  [tweet]
+  (for [x (tweet :hashtags)]
+    (x :text)))</pre></td></tr><tr><td class="docs"><p>A function to take tweets and generate a JSON string containing all the hashtags associated with those tweets.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn hashtag-json 
+  [search-term]
+      (let [tweets (get-tweet-info 
+                     (initial-tweets-request search-term))]
+        (cheshire/generate-string
+          (set 
+            (flatten
+              (for [tweet tweets] 
+                (parse-tweet-for-hashtag tweet)))))))</pre></td></tr><tr><td class="docs"><p>A function to facilitate requesting tweets from Twitter and feed them into the database.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn add-tweets-to-db 
+  []
+  (let [trends (data/retrieve-trends)]
+    (for [trend trends]
+      (raw-tweet-to-db trend))))</pre></td></tr><tr><td class="docs"><p>Takes the parsed trend data and inserts it into the database.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn add-trends-to-db 
+  []
+  (data/insert-trends (trends-response))
+  (add-tweets-to-db)
+  (println &quot;inserting&quot;))</pre></td></tr><tr><td class="docs"><p>A value to be used in the start function to indicate the task should start immediately.</p>
+</td><td class="codes"><pre class="brush: clojure">(def immediately 0)</pre></td></tr><tr><td class="docs"><p>A value to be used in the start function which represents a period of a minute.</p>
+</td><td class="codes"><pre class="brush: clojure">(def every-minute (* 60 1000))</pre></td></tr><tr><td class="docs"><p>A function that executes the supplied function for the frequency specified by the period.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn start 
+  [fn period]
+  (scheduler/periodically fn immediately period))</pre></td></tr><tr><td class="docs"><p>A function to stopped the timed execution that start initiated.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn stop
+  []
+  (scheduler/shutdown))</pre></td></tr><tr><td class="docs"><p>Trends are requested and added to Twitter every minute.
+(start #(add-trends-to-db) every-minute)</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The bones of code to create a bayesian rating system for tweets. The number of retweets would
+be rated by how old the tweets were in order to created value which would provide an accurate rank for
+that tweet.</p>
 </td><td class="codes"><pre class="brush: clojure">(comment 
 (def avg-age 360)
 (def avg-rt 50)
@@ -3176,7 +3204,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (def counter (counter-generator))
   (hiccup/html 
     [:h1 &quot;Tweets&quot;]
-    (for [tweet-map (tweets/raw-tweets-from-db)]
+    (for [tweet-map (tweets/get-tweet-info (tweets/initial-tweets-request search-term))]
       [:div
        [:h2 (str &quot;Tweet &quot; (counter))]
        [:p (str tweet-map)]])))</pre></td></tr><tr><td class="docs"><p>Simply prints out all the tweets with no separation. Useful for seeing what data structure is being used to contain
@@ -3195,7 +3223,8 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [monger.core :as mg]
             [monger.collection :as coll]
             [monger.json :as json]
-            [monger.result :as result])
+            [monger.result :as result]
+            [monger.util :as mutil])
 	(:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]))</pre></td></tr><tr><td class="docs"><p>This handles connecting to MongoDB via port 27017 on localhost.</p>
 </td><td class="codes"><pre class="brush: clojure">(mg/connect!)</pre></td></tr><tr><td class="docs"><p>Once connected this function instructs MongoDB to use the database "Trend-Analyser".</p>
@@ -3210,19 +3239,21 @@ net.brehaut.ClojureTools = (function (SH) {
    hashmap with an automatically generated id.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn insert-trends 
    [insert]
-     (if 
-       ( = (coll/remove &quot;trends&quot;) (coll/insert &quot;trends&quot; (into {} (merge {:_id (ObjectId.)} insert))))
-       nil))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(comment (defn insert-trends [insert]
+   (-&gt;
+     (coll/insert &quot;trends&quot; (into {} (merge {:_id (mutil/object-id) :date (str(java.util.Date.))} insert)))
+     (coll/remove &quot;trends&quot;)))</pre></td></tr><tr><td class="docs"><p>A different version of the function above. It's exception handling seemed to interfere with the timer so it was stripped out
+           in the hope that it would work without them.</p>
+</td><td class="codes"><pre class="brush: clojure">(comment (defn insert-trends 
+           [insert]
      (if (result/ok? (coll/remove &quot;trends&quot;))
-       (if (result/ok? (coll/insert &quot;trends&quot; (into {} (merge {:_id (ObjectId.)} insert)))
+       (if (result/ok? (coll/insert &quot;trends&quot; (into {} (merge {:_id (mutil/object-id) :date (str(java.util.Date.))} insert))))
          true
          (throw (Exception. &quot;Failed to add trends into db.&quot;)))
-       (throw (Exception. &quot;Failed to remove trends from db.&quot;))))))</pre></td></tr><tr><td class="docs"><p>Retrieves the trends from the database. Once they are retrieved they are removed from the hashmap.
+       (throw (Exception. &quot;Failed to remove trends from db.&quot;)))))</pre></td></tr><tr><td class="docs"><p>Retrieves the trends from the database. Once they are retrieved they are removed from the hashmap.
    This function returns a seq with the names of the trends in it.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn retrieve-trends 
    []
-  (:trends
+   (:trends
     (first
       (coll/find-maps &quot;trends&quot;))))</pre></td></tr><tr><td class="docs"><p>A helper function to ensure tweets are correctly formatted to go in the database.
    Places the tweets in the database in a hashmap, with an automatically generated id
@@ -3237,7 +3268,23 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn retrieve-raw-tweets 
   []
   (first
-    (coll/find-maps &quot;rawtweets&quot;)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#" name=""><h1 class="project-name"></h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>0.1.1-SNAPSHOT</p>
+    (coll/find-maps &quot;rawtweets&quot;)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#trend-analyser.scheduler" name="trend-analyser.scheduler"><h1 class="project-name">trend-analyser.scheduler</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>This namespace provides utilities for creating timers to run a task periodically.</p>
+</td><td class="codes"><pre class="brush: clojure">(ns trend-analyser.scheduler
+  (:import (java.util.concurrent ScheduledThreadPoolExecutor TimeUnit)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def ^:private num-threads 1)
+(def ^:private pool (atom nil))</pre></td></tr><tr><td class="docs"><p>Creates a pool of threads to execute jobs on.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- thread-pool 
+  []
+  (swap! pool (fn [p] (or p (ScheduledThreadPoolExecutor. num-threads)))))</pre></td></tr><tr><td class="docs"><p>Schedules function f to run every 'delay' milliseconds after a
+      delay of 'initial-delay'.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn periodically
+ 	  [f initial-delay delay]
+ 	  (.scheduleWithFixedDelay (thread-pool)
+ 	                           f
+ 	                           initial-delay delay TimeUnit/MILLISECONDS))</pre></td></tr><tr><td class="docs"><p>Terminates all periodic tasks.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn shutdown
+  []
+  (swap! pool (fn [p] (when p (.shutdown p)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#" name=""><h1 class="project-name"></h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>0.1.1-SNAPSHOT</p>
 </td><td class="codes"><pre class="brush: clojure">(defproject Trend-Analyser 
   :description &quot;A compojure based web app that analyses trend data from Twitter.
   Uses MongoDB for storage and an assortment of libraries to process the tweets.&quot;
@@ -3247,8 +3294,7 @@ net.brehaut.ClojureTools = (function (SH) {
                  [cheshire &quot;5.0.1&quot;]
                  [clj-http &quot;0.6.3&quot;]
                  [hiccup &quot;1.0.2&quot;]
-                 [com.novemberain/monger &quot;1.4.2&quot;]
-                 [overtone/at-at &quot;1.1.1&quot;]]
+                 [com.novemberain/monger &quot;1.4.2&quot;]]
   :plugins [[lein-ring &quot;0.8.0&quot;]
             [lein-marginalia &quot;0.7.1&quot;]]
   :ring {:handler trend-analyser.handler/app}

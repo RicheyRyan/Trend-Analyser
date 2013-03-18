@@ -31,10 +31,14 @@
   "This function removes any existing trend data from the database and inserts new trend data. It formats the trends in
    hashmap with an automatically generated id."
    [insert]
-    (coll/insert "trends" (into {} (merge {:_id (mutil/object-id) :date (str(java.util.Date.))} insert)))
-    nil)
+   (->
+     (coll/insert "trends" (into {} (merge {:_id (mutil/object-id) :date (str(java.util.Date.))} insert)))
+     (coll/remove "trends")))
 
-(comment (defn insert-trends [insert]
+(comment (defn insert-trends 
+           "A different version of the function above. It's exception handling seemed to interfere with the timer so it was stripped out
+           in the hope that it would work without them."
+           [insert]
      (if (result/ok? (coll/remove "trends"))
        (if (result/ok? (coll/insert "trends" (into {} (merge {:_id (mutil/object-id) :date (str(java.util.Date.))} insert))))
          true
@@ -45,8 +49,9 @@
   "Retrieves the trends from the database. Once they are retrieved they are removed from the hashmap.
    This function returns a seq with the names of the trends in it."
    []
+   (:trends
     (first
-      (coll/find-maps "trends")))
+      (coll/find-maps "trends"))))
 
 (defn format-raw-tweets 
   "A helper function to ensure tweets are correctly formatted to go in the database.

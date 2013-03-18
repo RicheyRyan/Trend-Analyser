@@ -20,9 +20,12 @@
   (GET "/tweets/:trend" [trend] (tweet-json trend))
   (GET "/tweetshtml/:trend" [trend] (tweet-html trend))
   (GET "/tweetlisthtml/:trend" [trend] (tweet-list-html trend))
+  (GET "/hashtags/:trend" [trend] (hashtag-json trend))
   (route/not-found "Not Found"))
 
 
 (def app
   "Defines the app variable which compojure will use when running the app."
   (handler/site app-routes))
+
+

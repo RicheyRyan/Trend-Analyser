@@ -27,7 +27,7 @@
   (def counter (counter-generator))
   (hiccup/html 
     [:h1 "Tweets"]
-    (for [tweet-map (tweets/raw-tweets-from-db)]
+    (for [tweet-map (tweets/get-tweet-info (tweets/initial-tweets-request search-term))]
       [:div
        [:h2 (str "Tweet " (counter))]
        [:p (str tweet-map)]])))

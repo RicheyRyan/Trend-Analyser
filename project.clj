@@ -7,8 +7,7 @@
                  [cheshire "5.0.1"]
                  [clj-http "0.6.3"]
                  [hiccup "1.0.2"]
-                 [com.novemberain/monger "1.4.2"]
-                 [overtone/at-at "1.1.1"]]
+                 [com.novemberain/monger "1.4.2"]]
   :plugins [[lein-ring "0.8.0"]
             [lein-marginalia "0.7.1"]]
   :ring {:handler trend-analyser.handler/app}
