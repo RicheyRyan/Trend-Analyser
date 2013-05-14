@@ -22,3 +22,4 @@
   "Terminates all periodic tasks."
   []
   (swap! pool (fn [p] (when p (.shutdown p)))))
+

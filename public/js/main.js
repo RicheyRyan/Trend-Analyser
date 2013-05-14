@@ -13,16 +13,20 @@ $(function() {
             sidebar.append('<li class="trend"><a href="#" >' + item + '</a></li>');
         });
 
-        $("active").removeClass("active");
+        //$("active").removeClass("active");
 
         $(".trend").click( function(){
-            $("trend").removeClass("active");
+            $(".trend").filter( function (index){
+                return $(this).hasClass("active");
+            }).removeClass("active");
             var text = $(this).text();
-            console.log($(this));
+            //console.log($(this));
             $(this).addClass("active");
             getTweets(text);
             getHashtags(text);
         });
+
+        $($(".trend")[0]).addClass("active");
 
     }
 
@@ -30,10 +34,10 @@ $(function() {
         tweetHolder.empty();
         $(list).each(function(index, item){
            tweetHolder.append('<li><blockquote class="twitter-tweet"> <a href="https://twitter.com/twitterapi/status/' + item + '"></a></blockquote></li>');
-           console.log(index);
+           //console.log(index);
            twttr.widgets.load();
         });
-        console.log(tweetHolder.html());
+        //console.log(tweetHolder.html());
         twttr.widgets.load();
     }
 
@@ -41,7 +45,8 @@ $(function() {
         hashtagBar.empty();
         $(list).each(function(index, item){
 
-            hashtagBar.append('<p><a href="https://twitter.com/search?q='+item+'">' + item + '</a></p>');
+            //hashtagBar.append('<p><a href="https://twitter.com/search?q='+item+'">' + item + '</a></p>');
+            hashtagBar.append('<a href="https://twitter.com/search?q='+item+'" class="badge badge-info">'+ item + '</a>');
         });
     }
 
@@ -67,7 +72,7 @@ $(function() {
         $.getJSON(url, function(data){
             hashtags = data;
             loadHashtags(hashtags);
-            console.log(hashtags);
+            //console.log(hashtags);
         }); 
     }
 

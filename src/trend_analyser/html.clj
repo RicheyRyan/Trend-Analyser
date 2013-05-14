@@ -20,6 +20,8 @@
   (let [count (atom 0)] 
     #(swap! count inc)))
 
+
+
 (defn tweet-html 
   "Loops through are the returned tweets. The closure is used to give each tweet a numbered heading.
   The actual tweet data is printed below the heading."
@@ -43,7 +45,6 @@
       [:div
        [:h2 (str "Tweet " (counter))]
        [:p (tweets/get-tweet-info (tweets/initial-tweets-request search-term))]]))
-
 
 
 
