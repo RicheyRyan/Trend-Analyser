@@ -33,7 +33,8 @@
    [insert]
    (->
      (coll/insert "trends" (into {} (merge {:_id (mutil/object-id) :date (str(java.util.Date.))} insert)))
-     (coll/remove "trends")))
+     ;(coll/remove "trends")
+     ))
 
 (comment (defn insert-trends 
            "A different version of the function above. It's exception handling seemed to interfere with the timer so it was stripped out

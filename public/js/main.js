@@ -1,11 +1,11 @@
-var trends;
-var tweets;
-
-var sidebar = $(".trend-sidebar");
-var tweetHolder = $(".tweet-holder");
-var hashtagBar = $(".hashtags");
-
 $(function() {
+
+    var trends = [];
+    var tweets = [];
+
+    var sidebar = $(".trend-sidebar");
+    var tweetHolder = $(".tweet-holder");
+    var hashtagBar = $(".hashtags");
 
     function loadSideBar(list){
         sidebar.empty().append('<li class="nav-header">Trends</li>');
@@ -55,6 +55,9 @@ $(function() {
         $.getJSON(url, function(data){
             trends = data;
             loadSideBar(trends);
+            var firstTrend = trends[0];
+            getTweets(firstTrend);
+            getHashtags(firstTrend);
         }); 
     }
 
@@ -68,7 +71,7 @@ $(function() {
     }
 
     function getHashtags(query){
-        var url = "http://localhost:3000/hashtags/GAA" + encodeURIComponent(query);
+        var url = "http://localhost:3000/hashtags/" + encodeURIComponent(query);
         $.getJSON(url, function(data){
             hashtags = data;
             loadHashtags(hashtags);
@@ -79,10 +82,8 @@ $(function() {
     
 
 
-    // Pull contacts from the server
+    // Pull trends from the server
     getTrends();
-    getTweets($(trends).get(1));
-    getHashtags($(trends).get(1));
 });
 
 
