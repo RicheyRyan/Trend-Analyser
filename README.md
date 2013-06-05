@@ -22,6 +22,12 @@ The scheduler namespace handles timed requests to Twitter. It uses the Java clas
 
 The html namespace is used to print out HTML representations of data retrieved from Twitter using the Hiccup library. This namespace was mainly used for debugging purposes. 
 
+## Documentation
+
+The documented code for the project can be found at the link below
+
+http://www.richeyryan.com/trend-analyser/
+
 ## License
 
 Copyright 2013 Richey Ryan
