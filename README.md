@@ -26,7 +26,7 @@ The html namespace is used to print out HTML representations of data retrieved f
 
 The documented code for the project can be found at the link below
 
-http://www.richeyryan.com/trend-analyser/
+http://www.richeyryan.com/Trend-Analyser/
 
 ## License
 
