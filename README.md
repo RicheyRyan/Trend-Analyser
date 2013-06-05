@@ -6,6 +6,8 @@ An application to process tweet data data from Twitter using Clojure.
 
 To create an application that retrieves the latest trends for Ireland from Twitter. It retrieves the tweets related to each of the trends. The tweets are ordered in terms of popularity and displayed to the user.
 
+![Structure of App](https://dl.dropboxusercontent.com/u/13548247/trend-analyser/structure.png)
+
 The application was used as means to learn about Clojure, functional programming and all the tools necessary to create a web application. These tools include the Clojure libraries Compojure, Cheshire, Monger and clj-http.
 
 ## Structure
