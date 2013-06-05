@@ -9,6 +9,7 @@
 	(:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]))
 
+
 ;;This handles connecting to MongoDB via port 27017 on localhost.
 (mg/connect!)
 
